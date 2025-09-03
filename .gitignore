@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints
+
+# Environment
+.env
+venv/
+
+# Database
+*.db
+
+# Vectorstore/Chroma
+/data/vectorstore/
+
+# PDF files
+/data/regulations/*.pdf
+
+# Index files
+*.index
+
+# OS
+.DS_Store
+
+# VSCode
+.vscode/
