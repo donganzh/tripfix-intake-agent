@@ -1,0 +1,270 @@
+# LangGraph Architecture Visual Diagram
+
+## Current State Overview (2024)
+LangGraph is a production-ready, low-level orchestration framework for building stateful AI agents.
+
+## Core Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              LangGraph Framework                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐             │
+│  │   StateGraph    │    │     Nodes       │    │     Edges       │             │
+│  │   Container     │    │                 │    │                 │             │
+│  │                 │    │  ┌───────────┐  │    │  ┌───────────┐  │             │
+│  │ • Orchestrates  │    │  │   Node    │  │    │  │Conditional│  │             │
+│  │ • Manages State │    │  │ Functions │  │    │  │   Edges   │  │             │
+│  │ • Coordinates   │    │  │           │  │    │  │           │  │             │
+│  │   Execution     │    │  │ • Process │  │    │  │ • Branch  │  │             │
+│  │                 │    │  │ • Update  │  │    │  │ • Route   │  │             │
+│  │                 │    │  │ • Return  │  │    │  │ • Decide  │  │             │
+│  └─────────────────┘    │  └───────────┘  │    │  └───────────┘  │             │
+│                         │                 │    │                 │             │
+│                         │  ┌───────────┐  │    │  ┌───────────┐  │             │
+│                         │  │   Node    │  │    │  │Unconditional│ │             │
+│                         │  │ Functions │  │    │  │   Edges   │  │             │
+│                         │  │           │  │    │  │           │  │             │
+│                         │  │ • Process │  │    │  │ • Direct  │  │             │
+│                         │  │ • Update  │  │    │  │ • Simple  │  │             │
+│                         │  │ • Return  │  │    │  │ • Linear  │  │             │
+│                         │  └───────────┘  │    │  └───────────┘  │             │
+│                         └─────────────────┘    └─────────────────┘             │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Your TripFix Implementation Workflow
+
+```
+                    ┌─────────────────────────────────────────────────────────────┐
+                    │                    TripFix LangGraph Workflow               │
+                    └─────────────────────────────────────────────────────────────┘
+
+                                    ┌─────────────┐
+                                    │   START     │
+                                    └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │    greet    │
+                                    │   (Node)    │
+                                    │             │
+                                    │ • Welcome   │
+                                    │ • Get name  │
+                                    │ • Set mood  │
+                                    └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │ collect_info│
+                                    │   (Node)    │
+                                    │             │
+                                    │ • Extract   │
+                                    │   flight    │
+                                    │   details   │
+                                    │ • Dynamic   │
+                                    │   questions │
+                                    └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │validate_data│
+                                    │   (Node)    │
+                                    │             │
+                                    │ • Check     │
+                                    │   format    │
+                                    │ • Validate  │
+                                    │   values    │
+                                    └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │determine_   │
+                                    │jurisdiction │
+                                    │   (Node)    │
+                                    │             │
+                                    │ • APPR      │
+                                    │   Canada    │
+                                    │ • EU261     │
+                                    │   Europe    │
+                                    │ • No        │
+                                    │   coverage  │
+                                    └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │assess_      │
+                                    │eligibility  │
+                                    │   (Node)    │
+                                    │             │
+                                    │ • Legal     │
+                                    │   analysis  │
+                                    │ • Compen-   │
+                                    │   sation    │
+                                    │   amount    │
+                                    └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │score_       │
+                                    │confidence   │
+                                    │   (Node)    │
+                                    │             │
+                                    │ • Risk      │
+                                    │   factors   │
+                                    │ • Pattern   │
+                                    │   detection │
+                                    │ • Confidence│
+                                    │   scoring   │
+                                    └──────┬──────┘
+                                           │
+                                    ┌──────▼──────┐
+                                    │ Conditional │
+                                    │   Branch    │
+                                    │             │
+                                    │ • High      │
+                                    │   confidence│
+                                    │ • Low       │
+                                    │   confidence│
+                                    │ • Off-topic │
+                                    └──────┬──────┘
+                                           │
+            ┌──────────────────────────────┼──────────────────────────────┐
+            │                              │                              │
+    ┌───────▼──────┐              ┌─────▼─────┐                ┌─────▼─────┐
+    │ handoff_     │              │complete_  │                │handle_    │
+    │ human        │              │intake     │                │off_topic  │
+    │ (Node)       │              │(Node)     │                │(Node)     │
+    │              │              │           │                │           │
+    │ • Human      │              │ • Success │                │ • Redirect│
+    │   review     │              │   message │                │ • Back to │
+    │ • Email      │              │ • Next    │                │   topic   │
+    │   notification│              │   steps   │                │ • Empathy │
+    │ • 24hr       │              │ • Welcome │                │           │
+    │   response   │              │   to      │                │           │
+    │              │              │   TripFix │                │           │
+    └───────┬──────┘              └─────┬─────┘                └─────┬─────┘
+            │                          │                              │
+            └──────────────────────────┼──────────────────────────────┘
+                                       │
+                                ┌──────▼──────┐
+                                │     END     │
+                                └─────────────┘
+```
+
+## State Management Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              State Management                                   │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
+│  │   Input     │    │   Process   │    │   Update    │    │   Persist   │     │
+│  │   State     │───▶│   Node      │───▶│   State     │───▶│   State     │     │
+│  │             │    │             │    │             │    │             │     │
+│  │ • Messages  │    │ • Extract   │    │ • Add new   │    │ • Database  │     │
+│  │ • Flight    │    │ • Analyze   │    │   data      │    │ • Session   │     │
+│  │   data      │    │ • Validate  │    │ • Update    │    │ • History   │     │
+│  │ • Context   │    │ • Decide    │    │   existing  │    │ • Progress  │     │
+│  │ • Progress  │    │ • Generate  │    │ • Set flags │    │ • Files     │     │
+│  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘     │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Key Features Comparison
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          LangGraph vs Alternatives                             │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  Feature                │ LangGraph │ Simple Chains │ Custom Orchestration     │
+│  ──────────────────────┼───────────┼───────────────┼─────────────────────────  │
+│  State Management       │    ✅     │      ❌       │         ⚠️              │
+│  Conditional Logic      │    ✅     │      ❌       │         ⚠️              │
+│  Human-in-Loop          │    ✅     │      ❌       │         ⚠️              │
+│  Debugging              │    ✅     │      ❌       │         ⚠️              │
+│  Persistence            │    ✅     │      ❌       │         ⚠️              │
+│  Scalability            │    ✅     │      ⚠️       │         ⚠️              │
+│  Learning Curve         │    ⚠️     │      ✅       │         ❌              │
+│  Resource Usage         │    ⚠️     │      ✅       │         ⚠️              │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Production Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          Production Deployment                                  │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
+│  │   User      │    │  Streamlit  │    │  LangGraph  │    │  Database   │     │
+│  │ Interface   │    │   Frontend  │    │  Workflow   │    │   Layer     │     │
+│  │             │    │             │    │             │    │             │     │
+│  │ • Chat      │───▶│ • UI        │───▶│ • State     │───▶│ • SQLite    │     │
+│  │ • File      │    │ • File      │    │   Graph     │    │ • ChromaDB  │     │
+│  │   Upload    │    │   Upload    │    │ • Agents    │    │ • Session   │     │
+│  │ • Messages  │    │ • Messages  │    │ • Memory    │    │   Storage   │     │
+│  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘     │
+│                                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
+│  │   OpenAI    │    │  Vector     │    │  File       │    │  Evaluation │     │
+│  │   API       │    │   Store     │    │ Processor   │    │   System    │     │
+│  │             │    │             │    │             │    │             │     │
+│  │ • GPT-4     │    │ • Embeddings│    │ • PDF       │    │ • Test      │     │
+│  │ • Embeddings│    │ • Search    │    │   Processing│    │   Cases     │     │
+│  │ • Chat      │    │ • Legal     │    │ • OCR       │    │ • Metrics   │     │
+│  │   Models    │    │   Docs      │    │ • Extraction│    │ • Dashboard │     │
+│  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘     │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Advanced Features in Your Implementation
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        Advanced TripFix Features                               │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐             │
+│  │   Advanced      │    │   Specialized   │    │   File          │             │
+│  │   Confidence    │    │   Agents        │    │   Processing    │             │
+│  │   Engine        │    │                 │    │                 │             │
+│  │                 │    │  ┌───────────┐  │    │  ┌───────────┐  │             │
+│  │ • 7 Risk        │    │  │Jurisdiction│  │    │  │ PDF       │  │             │
+│  │   Factors       │    │  │   Agent    │  │    │  │ Processing│  │             │
+│  │ • Dynamic       │    │  │           │  │    │  │           │  │             │
+│  │   Thresholds    │    │  │ • APPR    │  │    │  │ • Text    │  │             │
+│  │ • Pattern       │    │  │ • EU261   │  │    │  │   Extract │  │             │
+│  │   Detection     │    │  │ • Legal   │  │    │  │ • OCR     │  │             │
+│  │ • Multi-level   │    │  │   Analysis│  │    │  │ • Flight  │  │             │
+│  │   Handoff       │    │  └───────────┘  │    │  │   Info    │  │             │
+│  └─────────────────┘    │                 │    │  └───────────┘  │             │
+│                         │  ┌───────────┐  │    │                 │             │
+│                         │  │Eligibility│  │    │  ┌───────────┐  │             │
+│                         │  │   Agent   │  │    │  │ Image     │  │             │
+│                         │  │           │  │    │  │ Processing│  │             │
+│                         │  │ • Compen- │  │    │  │           │  │             │
+│                         │  │   sation  │  │    │  │ • OCR     │  │             │
+│                         │  │ • Legal   │  │    │  │ • Text    │  │             │
+│                         │  │   Basis   │  │    │  │   Extract │  │             │
+│                         │  │ • Citations│  │    │  │ • Flight  │  │             │
+│                         │  └───────────┘  │    │  │   Info    │  │             │
+│                         └─────────────────┘    │  └───────────┘  │             │
+│                                                 └─────────────────┘             │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Summary
+
+LangGraph in 2024 represents a mature, production-ready framework for building complex AI agent workflows. Your TripFix implementation demonstrates many of its key strengths:
+
+1. **Sophisticated Workflow Management**: Complex conditional branching and state management
+2. **Human-in-the-Loop Integration**: Seamless handoff capabilities
+3. **Advanced State Persistence**: Comprehensive session and conversation management
+4. **Specialized Agent Architecture**: Domain-specific agents for different tasks
+5. **Production-Ready Features**: Error handling, performance tracking, and evaluation systems
+
+The framework is particularly well-suited for applications requiring complex decision trees, stateful interactions, and production deployment with human oversight.

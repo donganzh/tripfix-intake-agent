@@ -1,13 +1,17 @@
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import BaseMessage
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 import json
+import logging
+
+# Configure logging for agents
+logger = logging.getLogger(__name__)
 
 class JurisdictionAgent:
     def __init__(self, openai_api_key: str, vector_store):
         self.llm = ChatOpenAI(
-            model="gpt-4-turbo-preview",
+            model="gpt-4o-mini",
             openai_api_key=openai_api_key,
             temperature=0.1
         )
@@ -44,16 +48,20 @@ Respond in JSON format:
     
     def determine_jurisdiction(self, flight_data: Dict[str, Any]) -> Tuple[str, str, List[str]]:
         """Determine which jurisdiction applies to the flight"""
+        logger.info(f"🌍 JurisdictionAgent: Starting jurisdiction determination")
         
         # Search for relevant regulations
         search_query = f"jurisdiction rules {flight_data.get('origin', '')} to {flight_data.get('destination', '')} {flight_data.get('airline', '')}"
+        logger.info(f"🔍 Searching regulations with query: {search_query}")
         relevant_docs = self.vector_store.search(search_query, n_results=8)
+        logger.info(f"📚 Found {len(relevant_docs)} relevant regulation documents")
         
         regulations_text = "\n\n".join([f"Source: {doc['metadata']['source']}\n{doc['content']}" 
                                       for doc in relevant_docs])
         
         # Format flight data for prompt
         flight_summary = json.dumps(flight_data, indent=2)
+        logger.info("🧠 Calling LLM for jurisdiction determination...")
         
         try:
             chain = self.prompt | self.llm
@@ -62,15 +70,47 @@ Respond in JSON format:
                 "relevant_regulations": regulations_text
             })
             
+            # Clean and parse JSON response
+            response_text = response.content.strip()
+            
+            # Try to extract JSON from the response if it's embedded in other text
+            if "```json" in response_text:
+                start = response_text.find("```json") + 7
+                end = response_text.find("```", start)
+                if end != -1:
+                    response_text = response_text[start:end].strip()
+            elif "```" in response_text:
+                start = response_text.find("```") + 3
+                end = response_text.find("```", start)
+                if end != -1:
+                    response_text = response_text[start:end].strip()
+            
+            # Find JSON object boundaries
+            if "{" in response_text and "}" in response_text:
+                start = response_text.find("{")
+                end = response_text.rfind("}") + 1
+                response_text = response_text[start:end]
+            
             # Parse JSON response
-            result = json.loads(response.content)
+            result = json.loads(response_text)
+            
+            # Validate required fields
+            jurisdiction = result.get("jurisdiction", "NEITHER")
+            if jurisdiction not in ["APPR", "EU261", "NEITHER"]:
+                jurisdiction = "NEITHER"
+            
+            logger.info(f"✅ JurisdictionAgent: Determination complete - Jurisdiction: {jurisdiction}")
             
             return (
-                result.get("jurisdiction", "NEITHER"),
+                jurisdiction,
                 result.get("reasoning", "No reasoning provided"),
                 result.get("applicable_articles", [])
             )
         
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error in jurisdiction determination: {e}")
+            print(f"Response content: {response.content if 'response' in locals() else 'No response'}")
+            return "NEITHER", f"JSON parsing error: {str(e)}", []
         except Exception as e:
             print(f"Error in jurisdiction determination: {e}")
             return "NEITHER", f"Error in analysis: {str(e)}", []
